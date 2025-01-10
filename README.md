@@ -198,8 +198,44 @@ if __name__ == "__main__":
 3. **Check the `urls.txt` file**  
    - The script will append any product links found (`/dp/`) to `urls.txt`.  
    - If you want a fresh file for each run, you can manually delete `urls.txt` before running again or open it in write mode (`"w"`) instead of append mode (`"a"`).
+How It Works
+Database Connection
 
+We use mysql.connector to connect to your WordPress database.
+Make sure you update the constants DB_HOST, DB_USER, DB_PASS, DB_NAME, and TABLE_PREFIX to match your environment.
+Reading the Links
+
+The script expects a file named urls.txt in the same folder.
+Each line should have a direct Amazon product page link (e.g., https://www.amazon.com/dp/B098XX...).
+Scraping
+
+For each URL, we call scrape_amazon_product(url) to parse the page.
+This is a very basic method for demonstration (Amazon’s HTML structure changes often). Adjust your selectors as needed.
+We extract title, price, a makeshift SKU (from the /dp/ASIN portion of the URL), and a basic description (if found).
+Inserting/Updating
+
+We search the DB for a product with the same _sku meta (find_existing_product). If found, we call update_product. Otherwise, we call create_new_product.
+create_new_product inserts a new row in wp_posts with post_type='product', then inserts the needed product meta in wp_postmeta (e.g., _regular_price, _price, _sku, etc.).
+update_product modifies existing rows.
+Time Delays
+
+To reduce the risk of being blocked, we have random sleeps of 1–3 seconds after each product. Increase these if you’re scraping a lot.
+Result
+
+When you visit your WordPress admin (/wp-admin/), you should see new products or updated products.
+If something doesn’t appear immediately, check if you need to re-save permalinks or flush caches.
+Potential Enhancements
+Better SKU Management: Instead of using the raw ASIN from the URL, you might parse the product page more thoroughly or allow custom SKUs.
+Images: Download images from Amazon, upload them to WordPress (directly via DB or using WP REST API for media), and link them to products.
+Categories: Insert terms into wp_terms, wp_term_taxonomy, and wp_term_relationships.
+Error Handling: More robust handling if the table structure or fields differ.
+Security: Minimizing DB credentials exposure and using SSL connections, etc.
+Final Notes
+Direct DB manipulation is generally not recommended because you bypass core WordPress hooks, caches, and data validation. The safer approach is to use the WooCommerce REST API or WP’s built-in APIs.
+Scraping Amazon can violate the Terms of Service and result in blocked IPs or legal issues if you do it at scale.
+Always test on a local or staging WordPress site before modifying a live store.
+Use this script responsibly, and good luck integrating your Amazon-scraped products into WooCommerce!
 ### Additional tips:
 - If you plan to do many searches (thousands of words × multiple domains), **increase the sleep time** or **rotate proxies**. Amazon tends to block repeated or suspicious scraping activity.  
 - Consider adding **CAPTCHA** detection logic, because Amazon often shows CAPTCHAs if it detects high-volume automated requests.  
-- The script is for **educational** and **demonstration** purposes only. Use responsibly.
+- The script is for **educational** and **demonstration** purposes only. Use responsibly. for more guides just head on to https://pablo-guides.com or https://pablo-guides.net
